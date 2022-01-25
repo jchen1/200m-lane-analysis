@@ -5,7 +5,7 @@ Code for a yet-to-be-published article describing the effect of lanes in outdoor
 ![](output/bar_by_lane.png)
 
 ![](output/box_by_lane.png)
-
+![](output/regression_by_lane.png)
 ![](output/diff_by_lane.png)
 
 ![](output/heatmap.png)

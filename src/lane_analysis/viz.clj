@@ -48,9 +48,57 @@
               :y {:field :corrected :type :quantitative :scale {:domain [19.4 23.8]} :title "Time (s)"}}
    :layer    [{:mark {:type :boxplot}}]})
 
+(defn regression
+  [all-results]
+  {:title "Mean Time vs Lane"
+   :data  {:values (->>
+                     all-results
+                     (group-by :lane)
+                     (map (fn [[lane vs]]
+                            {:lane lane
+                             :corrected (/ (->> vs (map :corrected) (apply +)) (count vs))})))}
+   :width graph-width
+   :layer [{:mark     {:type :point
+                       :size 100
+                       :filled true}
+            :encoding {:x {:field :lane :type :ordinal :title "Lane"}
+                       :y {:field :corrected :type :quantitative :scale {:domain [20 21.5]} :title "Time (s)"}}}
+           {:mark      {:type  :line
+                        :color :firebrick}
+            :transform [{:regression :corrected
+                         :on         :lane}]
+            :encoding  {:x {:field :lane
+                            :type  :ordinal}
+                        :y {:field :corrected
+                            :type  :quantitative}}}
+           {:transform [{:regression :corrected
+                         :on         :lane
+                         :params     true}
+                        {:calculate "'R²: '+format(datum.rSquared, '.2f')"
+                         :as        :R2}]
+            :mark      {:type  :text
+                        :color :firebrick
+                        :x     :width
+                        :align :right
+                        :y     -5}
+            :encoding  {:text {:type  :nominal
+                               :field :R2}}}
+           {:transform [{:regression :corrected
+                         :on         :lane
+                         :params     true}
+                        {:calculate "'y = ' + format(datum.coef[1], '.4f') + 'x + ' + format(datum.coef[0], '.3f')"
+                         :as        :equation}]
+            :mark      {:type  :text
+                        :color :firebrick
+                        :x     :width
+                        :align :right
+                        :y     -20}
+            :encoding  {:text {:type  :nominal
+                               :field :equation}}}]})
+
 (defn regression-from-best
   [all-results]
-  {:title "Diff from Season's Best"
+  {:title "Diff from Season's Best vs Lane"
    :data  {:values (->>
                      all-results
                      ;; filter out likely injuries
@@ -122,8 +170,11 @@
    [:h1 "200m lane analysis"]
    [:vega-lite (plot-results-by-lane all-results)]
    [:vega-lite (box-whisker-plot all-results)]
+   [:vega-lite (regression all-results)]
    [:vega-lite (regression-from-best all-results)]
    [:vega-lite (histogram all-results)]])
+
+(view! (all-graphs (clojure.edn/read-string (slurp "output/all-results.edn"))))
 
 (comment
   (ensure-server-started!)

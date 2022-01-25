@@ -1,7 +1,7 @@
-(ns curve-analysis.pdf
+(ns lane-analysis.pdf
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [curve-analysis.util :as util])
+            [lane-analysis.util :as util])
   (:import [org.apache.pdfbox.pdmodel PDDocument]
            [org.apache.pdfbox.text PDFTextStripper]
            [java.text SimpleDateFormat]))

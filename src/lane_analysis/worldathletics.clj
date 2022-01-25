@@ -1,8 +1,8 @@
-(ns curve-analysis.worldathletics
+(ns lane-analysis.worldathletics
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]
             [clojure.string :as str]
-            [curve-analysis.util :as util]
+            [lane-analysis.util :as util]
             [clojure.java.io :as io]
             [clojure.edn :as edn]))
 

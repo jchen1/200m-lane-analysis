@@ -1,4 +1,4 @@
-(ns curve-analysis.util
+(ns lane-analysis.util
   (:require [clojure.string :as str])
   (:import [java.security MessageDigest]
            [java.text Normalizer Normalizer$Form]))

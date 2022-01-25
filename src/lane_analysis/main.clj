@@ -1,10 +1,10 @@
-(ns curve-analysis.main
+(ns lane-analysis.main
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [curve-analysis.pdf :as pdf]
+            [lane-analysis.pdf :as pdf]
             [clojure.edn :as edn]
-            [curve-analysis.util :as util]
-            [curve-analysis.worldathletics :as wa])
+            [lane-analysis.util :as util]
+            [lane-analysis.worldathletics :as wa])
   (:import [java.io File]))
 
 

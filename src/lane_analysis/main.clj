@@ -1,28 +1,14 @@
 (ns lane-analysis.main
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [lane-analysis.pdf :as pdf]
-            [clojure.edn :as edn]
             [lane-analysis.util :as util]
+            [lane-analysis.viz :as viz]
             [lane-analysis.worldathletics :as wa])
   (:import [java.io File]))
 
-
 (def results-file "output/all-results.edn")
-(defn parse-pdfs
-  []
-  (let [f (io/file results-file)]
-    (if (.exists f)
-      (edn/read-string (slurp f))
-      (let [all-results (->> (file-seq (io/file "pdfs"))
-                             (filter #(str/ends-with? (.getName ^File %) ".pdf"))
-                             (map #(.getAbsolutePath %))
-                             (sort)
-                             (mapcat pdf/extract-200m-times-from-pdf)
-                             (map #(assoc % :corrected (util/correct-200m-for-wind (:time %) (:wind-speed %))))
-                             vec)]
-        (spit f all-results)
-        all-results))))
 
 (defn add-seasons-best-information
   [{:keys [athlete-name meet-date corrected] :as result}]
@@ -36,19 +22,41 @@
       :fastest-time fastest-time
       :diff (- corrected fastest-time))))
 
+(defn get-results-from-pdfs
+  []
+  (let [f (io/file results-file)]
+    (if (.exists f)
+      (edn/read-string (slurp f))
+      (let [all-results (->> (file-seq (io/file "pdfs"))
+                             (filter #(str/ends-with? (.getName ^File %) ".pdf"))
+                             (map #(.getAbsolutePath %))
+                             (sort)
+                             (mapcat pdf/extract-200m-times-from-pdf)
+                             (sort-by :lane)
+                             (map #(assoc % :corrected (util/correct-200m-for-wind (:time %) (:wind-speed %))))
+                             (map add-seasons-best-information)
+                             vec)]
+        (spit f all-results)
+        all-results))))
+
+(defn write-csv!
+  [all-results]
+  (let [csv-str (with-out-str
+                  (println "Lane,Time,Diff From Season's Best")
+                  (doseq [{:keys [lane time diff]} all-results]
+                    (println (format "%s,%s,%s" lane time diff))))]
+    (spit "output/all-results.csv" csv-str)))
+
 (defn -main
   []
-  (let [all-results (->> (parse-pdfs)
-                         (sort-by :lane)
-                         (map add-seasons-best-information)
-                         vec)
-        csv (with-out-str
-              (println "Lane,Time,Diff From Season's Best")
-              (doseq [{:keys [lane time diff]} all-results]
-                (println (format "%s,%s,%s" lane time diff))))]
-    (spit "output/all-results.csv" csv)))
+  (let [all-results (get-results-from-pdfs)]
+    #_(write-csv! all-results)
+    (viz/export! (viz/all-graphs all-results) "output/viz.html")))
 
 (comment
+  (first (get-results-from-pdfs))
+
+
   (do
     (io/delete-file results-file true)
     (-main))
